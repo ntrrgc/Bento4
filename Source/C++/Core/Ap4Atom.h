@@ -43,6 +43,7 @@
 #include "Ap4Debug.h"
 #include "Ap4DynamicCast.h"
 #include "Ap4Array.h"
+#include <stack>
 
 /*----------------------------------------------------------------------
 |   macros
@@ -155,8 +156,20 @@ public:
 
 private:
     // members
-    AP4_ByteStream* m_Stream;
-    AP4_Cardinal    m_Indent;
+    AP4_ByteStream*              m_Stream;
+    AP4_Cardinal                 m_Indent;
+
+    struct OffsetStackEntry {
+        unsigned int             m_CurrentPosition;
+        unsigned int             m_ClosingPosition;
+
+        OffsetStackEntry(unsigned int m_CurrentPosition,
+                         unsigned int m_ClosingPosition)
+           : m_CurrentPosition(m_CurrentPosition),
+             m_ClosingPosition(m_ClosingPosition)
+        {}
+    };
+    std::stack<OffsetStackEntry> m_OffsetStack;
 };
 
 /*----------------------------------------------------------------------

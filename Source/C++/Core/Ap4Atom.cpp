@@ -773,6 +773,10 @@ AP4_MakePrefixString(unsigned int indent, char* prefix, AP4_Size size)
     m_Indent(indent)
 {
     m_Stream->AddReference();
+    m_OffsetStack.push(OffsetStackEntry(
+        /* m_CurrentPosition */ 0,
+        /* m_ClosingPosition */ 0 // never read!
+    ));
 }
 
 /*----------------------------------------------------------------------
@@ -812,11 +816,17 @@ AP4_PrintInspector::StartAtom(const char* name,
                              flags);
         }
     }
+
+    unsigned current_position = m_OffsetStack.top().m_CurrentPosition;
     AP4_FormatString(info, sizeof(info), 
-                     "size=%d+%lld%s", 
+                     "offset=0x%x size=%d+%lld%s",
+                     current_position,
                      header_size, 
                      size-header_size, 
                      extra);
+    m_OffsetStack.push(OffsetStackEntry(
+        /* m_CurrentPosition */ current_position + header_size,
+        /* m_ClosingPosition */ current_position + size));
 
     char prefix[256];
     AP4_MakePrefixString(m_Indent, prefix, sizeof(prefix));
@@ -837,6 +847,10 @@ void
 AP4_PrintInspector::EndAtom()
 {
     m_Indent -= 2;
+
+    unsigned int closing_position = m_OffsetStack.top().m_ClosingPosition;
+    m_OffsetStack.pop();
+    m_OffsetStack.top().m_CurrentPosition = closing_position;
 }
 
 /*----------------------------------------------------------------------
